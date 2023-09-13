@@ -97,17 +97,13 @@ changes = []
 for fn in sys.argv[1:]:
     if fn.endswith('~'):
         continue
-    for change in splitChanges(fetch(fn)):
-        changes.append(score(change,fn))
-
+    changes.extend(score(change,fn) for change in splitChanges(fetch(fn)))
 changes.sort()
 
 last_lw = "this is not a header"
 for _, lw, header, rest in changes:
-    if lw == last_lw:
-        print(rest, end="")
-    else:
+    if lw != last_lw:
         print()
         print("  o",header)
-        print(rest, end="")
         last_lw = lw
+    print(rest, end="")

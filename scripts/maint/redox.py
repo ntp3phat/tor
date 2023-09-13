@@ -80,17 +80,15 @@ def parsething(thing):
     """
     if thing.startswith("Compound "):
         tp, name = "type", thing.split()[1]
-    else:
-        m = THING_RE.match(thing)
-        if not m:
-            print(thing, "???? Format didn't match.")
-            return None, None
-        else:
-            name, tp, parent = m.groups()
-            if parent == 'class':
-                if tp == 'variable' or tp == 'function':
-                    tp = 'field'
+    elif m := THING_RE.match(thing):
+        name, tp, parent = m.groups()
+        if parent == 'class':
+            if tp in ['variable', 'function']:
+                tp = 'field'
 
+    else:
+        print(thing, "???? Format didn't match.")
+        return None, None
     return name, tp
 
 def read():
@@ -100,8 +98,7 @@ def read():
     """
     errs = {}
     for line in sys.stdin:
-        m = NODOC_LINE_RE.match(line)
-        if m:
+        if m := NODOC_LINE_RE.match(line):
             file, line, tp, thing = m.groups()
             assert tp.lower() == 'warning'
             name, kind = parsething(thing)
@@ -178,23 +175,13 @@ def checkf(fn, errs):
             continue
 
         ln = findline(lines, line, name)
-        if ln == None:
-            print("Couldn't find the definition of %s allegedly on %s of %s"%(
-                name, line, fn))
-        else:
-            if hasdocdoc(lines, line, kind):
-#                print "Has a DOCDOC"
-#                print fn, line, name, kind
-#                print "\t",lines[line-2],
-#                print "\t",lines[line-1],
-#                print "\t",lines[line],
-#                print "-------"
-                pass
-            else:
-                if kind == 'function' and FUNC_PAT.match(lines[ln]):
-                    ln = ln - 1
+        if ln is None:
+            print(f"Couldn't find the definition of {name} allegedly on {line} of {fn}")
+        elif not hasdocdoc(lines, line, kind):
+            if kind == 'function' and FUNC_PAT.match(lines[ln]):
+                ln = ln - 1
 
-                comments.append((ln, kind, name))
+            comments.append((ln, kind, name))
 
     return comments
 
@@ -220,17 +207,14 @@ def applyComments(fn, entries):
         lines.insert(ln, "/* DOCDOC %s */\n"%name)
         N += 1
 
-    outf = open(fn+".newdoc", 'w')
-    for line in lines[1:]:
-        outf.write(line)
-    outf.close()
-
-    print("Added %s DOCDOCs to %s" %(N, fn))
+    with open(f"{fn}.newdoc", 'w') as outf:
+        for line in lines[1:]:
+            outf.write(line)
+    print(f"Added {N} DOCDOCs to {fn}")
 
 e = read()
 
 for fn, errs in e.iteritems():
     print(repr((fn, errs)))
-    comments = checkf(fn, errs)
-    if comments:
+    if comments := checkf(fn, errs):
         applyComments(fn, comments)

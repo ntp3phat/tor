@@ -26,8 +26,7 @@ def radix255(x):
   result = ""
   for i in range(9):
     result = result+str(x[i])+","
-  result = result+str(x[9])
-  return result
+  return result+str(x[9])
 
 d = -121665 * inv(121666)
 print(radix255(d))

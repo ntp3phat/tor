@@ -26,8 +26,7 @@ def radix255(x):
   result = ""
   for i in range(9):
     result = result+str(x[i])+","
-  result = result+str(x[9])
-  return result
+  return result+str(x[9])
 
 I = expmod(2,(q-1)/4,q)
 print(radix255(I))
