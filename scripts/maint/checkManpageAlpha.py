@@ -36,10 +36,10 @@ class Reader(object):
         Append the anchor names to the list of items in the current
         section.
         """
-        m = anchor_re.match(line)
-        if not m:
+        if m := anchor_re.match(line):
+            self.anchors.append(m.group(1))
+        else:
             return self._getsec(line)
-        self.anchors.append(m.group(1))
 
     def diffsort(self, key):
         """Unified diff of unsorted and sorted item lists
@@ -47,8 +47,9 @@ class Reader(object):
         # Append newlines because difflib works better with them
         a = [s + '\n' for s in self.d[key]]
         b = sorted(a, key=str.lower)
-        return difflib.unified_diff(a, b, fromfile=key+' unsorted',
-                                    tofile=key+' sorted')
+        return difflib.unified_diff(
+            a, b, fromfile=f'{key} unsorted', tofile=f'{key} sorted'
+        )
 
 def main():
     """Diff unsorted and sorted lists of option names in a manpage

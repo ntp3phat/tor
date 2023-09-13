@@ -162,7 +162,7 @@ def server_part1(cmsg, verification, b, B, ID):
     if len(cmsg) < (IDENTITY_LEN + PUB_KEY_LEN * 2 + MAC_LEN):
         raise Reject()
 
-    mac_covered_portion = cmsg[0:-MAC_LEN]
+    mac_covered_portion = cmsg[:-MAC_LEN]
     cmsg = ByteSeq(cmsg)
     cmsg_id = cmsg.take(IDENTITY_LEN)
     cmsg_B = cmsg.take(PUB_KEY_LEN)
@@ -273,7 +273,7 @@ def p(varnames, localvars):
     for v in varnames:
         label = v
         val = localvars[label]
-        print('{} = "{}"'.format(label, binascii.b2a_hex(val).decode("ascii")))
+        print(f'{label} = "{binascii.b2a_hex(val).decode("ascii")}"')
 
 def test():
     (b,B) = keygen()

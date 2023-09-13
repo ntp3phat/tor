@@ -85,14 +85,11 @@ def consider_function_size(fname, f):
     """
 
     for name, lines in metrics.get_function_lines(f):
-        canonical_function_name = "%s:%s()" % (fname, name)
+        canonical_function_name = f"{fname}:{name}()"
         yield problem.FunctionSizeItem(canonical_function_name, lines)
 
 def consider_include_violations(fname, real_fname, f):
-    n = 0
-    for item in includes.consider_include_rules(real_fname, f):
-        n += 1
-    if n:
+    if n := sum(1 for _ in includes.consider_include_rules(real_fname, f)):
         yield problem.DependencyViolationItem(fname, n)
 
 
@@ -103,8 +100,7 @@ def consider_all_metrics(files_list):
        object for those issues."""
     for fname in files_list:
         with open_file(fname) as f:
-            for item in consider_metrics_for_file(fname, f):
-                yield item
+            yield from consider_metrics_for_file(fname, f)
 
 def consider_metrics_for_file(fname, f):
     """
@@ -117,23 +113,16 @@ def consider_metrics_for_file(fname, f):
         fname = fname[len(TOR_TOPDIR):]
 
     # Get file length
-    for item in consider_file_size(fname, f):
-        yield item
-
+    yield from consider_file_size(fname, f)
     # Consider number of #includes
     f.seek(0)
-    for item in consider_includes(fname, f):
-        yield item
-
+    yield from consider_includes(fname, f)
     # Get function length
     f.seek(0)
-    for item in consider_function_size(fname, f):
-        yield item
-
+    yield from consider_function_size(fname, f)
     # Check for "upward" includes
     f.seek(0)
-    for item in consider_include_violations(fname, real_fname, f):
-        yield item
+    yield from consider_include_violations(fname, real_fname, f)
 
 HEADER="""\
 # Welcome to the exceptions file for Tor's best-practices tracker!
@@ -239,7 +228,7 @@ def main(argv):
     # 2) Initialize problem vault and load an optional exceptions file so that
     # we don't warn about the past
     if args.regen:
-        tmpname = exceptions_file + ".tmp"
+        tmpname = f"{exceptions_file}.tmp"
         tmpfile = open(tmpname, "w")
         problem_file = tmpfile
         problem_file.write(HEADER)
@@ -276,12 +265,11 @@ def main(argv):
         sys.exit(0)
 
     if args.regen_overbroad:
-        tmpname = exceptions_file + ".tmp"
-        tmpfile = open(tmpname, "w")
-        tmpfile.write(HEADER)
-        for item in ProblemVault.list_exceptions_without_overbroad():
-            print(item, file=tmpfile)
-        tmpfile.close()
+        tmpname = f"{exceptions_file}.tmp"
+        with open(tmpname, "w") as tmpfile:
+            tmpfile.write(HEADER)
+            for item in ProblemVault.list_exceptions_without_overbroad():
+                print(item, file=tmpfile)
         shutil.move(tmpname, exceptions_file)
         sys.exit(0)
 

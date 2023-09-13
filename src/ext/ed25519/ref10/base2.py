@@ -51,12 +51,11 @@ def radix255(x):
   result = ""
   for i in range(9):
     result = result+str(x[i])+","
-  result = result+str(x[9])
-  return result
+  return result+str(x[9])
 
 Bi = B
 
-for i in range(8):
+for _ in range(8):
   print(" {")
   print("  {",radix255(Bi[1]+Bi[0]),"},")
   print("  {",radix255(Bi[1]-Bi[0]),"},")

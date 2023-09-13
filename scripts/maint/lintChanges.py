@@ -10,7 +10,7 @@ import re
 import os
 
 
-KNOWN_GROUPS = set([
+KNOWN_GROUPS = {
     "Minor bugfix",
     "Minor bugfixes",
     "Major bugfix",
@@ -26,13 +26,12 @@ KNOWN_GROUPS = set([
     "Removed features",
     "Deprecated features",
     "Directory authority changes",
-
-    # These aren't preferred, but sortChanges knows how to clean them up.
     "Code simplifications and refactoring",
     "Code simplification and refactorings",
-    "Code simplifications and refactorings"])
+    "Code simplifications and refactorings",
+}
 
-NEEDS_SUBCATEGORIES = set([
+NEEDS_SUBCATEGORIES = {
     "Minor bugfix",
     "Minor bugfixes",
     "Major bugfix",
@@ -41,7 +40,7 @@ NEEDS_SUBCATEGORIES = set([
     "Minor features",
     "Major feature",
     "Major features",
-    ])
+}
 
 def split_tor_version(version):
     '''
@@ -63,7 +62,7 @@ def split_tor_version(version):
 
     if len(version_groups) != 5:
         return None
-    version_components = version_groups[0:3]
+    version_components = version_groups[:3]
     version_components += version_groups[4:5]
 
     try:
@@ -83,11 +82,7 @@ def lintfile(fname):
         print("\t{}".format(s))
 
     m = re.search(r'(\d{3,})', os.path.basename(fname))
-    if m:
-        bugnum = m.group(1)
-    else:
-        bugnum = None
-
+    bugnum = m.group(1) if m else None
     with open(fname) as f:
         contents = f.read()
 
@@ -112,10 +107,11 @@ def lintfile(fname):
     if re.search(r'\#\d{2,}', contents):
         warn("Don't use a # before ticket numbers. ('bug 1234' not '#1234')")
 
-    if isBug and not re.search(r'(\d+)', contents):
-        warn("Ticket marked as bugfix, but does not mention a number.")
-    elif isBug and not re.search(r'Fixes ([a-z ]*)bugs? (\d+)', contents):
-        warn("Ticket marked as bugfix, but does not say 'Fixes bug XXX'")
+    if isBug:
+        if not re.search(r'(\d+)', contents):
+            warn("Ticket marked as bugfix, but does not mention a number.")
+        elif not re.search(r'Fixes ([a-z ]*)bugs? (\d+)', contents):
+            warn("Ticket marked as bugfix, but does not say 'Fixes bug XXX'")
 
     if re.search(r'[bB]ug (\d+)', contents):
         if not re.search(r'[Bb]ugfix on ', contents):

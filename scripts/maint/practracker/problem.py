@@ -35,7 +35,7 @@ class ProblemVault(object):
         # suppress.
         self.used_exception_for = {}
 
-        if exception_fname == None:
+        if exception_fname is None:
             return
 
         try:
@@ -50,9 +50,7 @@ class ProblemVault(object):
             try:
                 problem = get_old_problem_from_exception_str(line)
             except ValueError as v:
-                print("Exception file line {} not recognized: {}"
-                      .format(lineno,v),
-                      file=sys.stderr)
+                print(f"Exception file line {lineno} not recognized: {v}", file=sys.stderr)
                 continue
 
             if problem is None:
@@ -60,8 +58,10 @@ class ProblemVault(object):
 
             # Fail if we see dup exceptions. There is really no reason to have dup exceptions.
             if problem.key() in self.exceptions:
-                print("Duplicate exceptions lines found in exception file:\n\t{}\n\t{}\nAborting...".format(problem, self.exceptions[problem.key()]),
-                      file=sys.stderr)
+                print(
+                    f"Duplicate exceptions lines found in exception file:\n\t{problem}\n\t{self.exceptions[problem.key()]}\nAborting...",
+                    file=sys.stderr,
+                )
                 sys.exit(1)
 
             self.exceptions[problem.key()] = problem
@@ -131,7 +131,7 @@ class ProblemVault(object):
 
 class ProblemFilter(object):
     def __init__(self):
-        self.thresholds = dict()
+        self.thresholds = {}
 
     def addThreshold(self, item):
         self.thresholds[(item.get_type(),item.get_file_type())] = item
@@ -139,9 +139,7 @@ class ProblemFilter(object):
     def matches(self, item):
         key = (item.get_type(), item.get_file_type())
         filt = self.thresholds.get(key, None)
-        if filt is None:
-            return False
-        return item.is_worse_than(filt)
+        return False if filt is None else item.is_worse_than(filt)
 
     def filter(self, sequence):
         for item in iter(sequence):
@@ -177,19 +175,16 @@ class Item(object):
         # Item location is a filesystem path, so we need to normalize this
         # across platforms otherwise same paths are not gonna match.
         canonical_location = os.path.normcase(self.problem_location)
-        return "%s:%s" % (canonical_location, self.problem_type)
+        return f"{canonical_location}:{self.problem_type}"
 
     def __str__(self):
-        return "problem %s %s %s" % (self.problem_type, self.problem_location, self.metric_value)
+        return f"problem {self.problem_type} {self.problem_location} {self.metric_value}"
 
     def get_type(self):
         return self.problem_type
 
     def get_file_type(self):
-        if self.problem_location.endswith(".h"):
-            return "*.h"
-        else:
-            return "*.c"
+        return "*.h" if self.problem_location.endswith(".h") else "*.c"
 
 class FileSizeItem(Item):
     """
